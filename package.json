@@ -7,12 +7,17 @@
     "start": "node index.js",
     "dev": "nodemon index.js"
   },
-  "keywords": ["hikvision", "cameras", "express"],
+  "keywords": [
+    "hikvision",
+    "cameras",
+    "express"
+  ],
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "express": "^4.18.2",
-    "axios": "^1.6.0"
+    "axios": "^1.6.0",
+    "dotenv": "^17.3.1",
+    "express": "^4.18.2"
   },
   "devDependencies": {
     "nodemon": "^3.0.1"

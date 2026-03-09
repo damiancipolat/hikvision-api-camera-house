@@ -8,6 +8,40 @@ API REST simple para obtener imágenes de cámaras Hikvision a través de Hik-Co
 npm install
 ```
 
+## Configuración
+
+Copia el archivo de ejemplo y completa tus valores:
+
+```bash
+cp .env.example .env
+```
+
+Variables disponibles en `.env`:
+
+```env
+PORT=3000
+
+JSESSIONID=tu-session-id-aqui
+
+CAMERA_1_ID=id-de-camara-1
+CAMERA_2_ID=id-de-camara-2
+CAMERA_3_ID=id-de-camara-3
+```
+
+### Obtener el JSESSIONID
+
+El `JSESSIONID` es la cookie de sesión necesaria para autenticar las peticiones. Cuando expire:
+
+1. Iniciar sesión en Hik-Connect en tu navegador
+2. Abrir las DevTools (F12) → pestaña Network
+3. Buscar peticiones a `hikcentralconnect.com`
+4. Copiar el valor de la cookie `JSESSIONID`
+5. Actualizar el valor en `.env`
+
+### Obtener IDs de cámaras
+
+Los IDs de cámara se encuentran en la plataforma Hik-Connect. Para agregar más cámaras, añade las variables `CAMERA_4_ID`, etc., en `.env` y registra la cámara en `config/cameras.js`.
+
 ## Uso
 
 ```bash
@@ -41,8 +75,7 @@ Obtiene las URLs de todas las cámaras.
       "picUrl": "https://...",
       "createTime": 1773022007207,
       "isEncrypt": 0
-    },
-    ...
+    }
   ]
 }
 ```
@@ -61,8 +94,7 @@ Obtiene todas las imágenes en formato base64.
       "imageBase64": "...",
       "contentType": "image/jpeg",
       "createTime": 1773022007207
-    },
-    ...
+    }
   ]
 }
 ```
@@ -91,58 +123,19 @@ Descarga directamente la imagen de la cámara en formato JPEG.
 
 **Respuesta:** Imagen JPEG (binary)
 
-## Configuración
-
-### JSESSIONID
-
-El `JSESSIONID` es necesario para autenticar las peticiones. Se encuentra configurado en `config/cameras.js`:
-
-```javascript
-const JSESSIONID = 'ea5c8080-1f8c-4770-8bf7-32dfd2934aa9';
-```
-
-**IMPORTANTE:** Esta cookie expira después de cierto tiempo. Cuando eso suceda, deberás:
-
-1. Iniciar sesión en Hik-Connect en tu navegador
-2. Abrir las DevTools (F12)
-3. En la pestaña Network, buscar la cookie `JSESSIONID`
-4. Actualizar el valor en `config/cameras.js`
-
-### IDs de Cámaras
-
-Las cámaras están configuradas en el objeto `CAMERAS` en `config/cameras.js`:
-
-```javascript
-const CAMERAS = {
-  1: {
-    id: 'ec0e4babb5bc40ff9bba0cd9c17b11ca',
-    name: 'Cámara 1'
-  },
-  2: {
-    id: '9c2a039e87e34f8c877f858b36ecf6b8',
-    name: 'Cámara 2'
-  },
-  3: {
-    id: 'c913adc6e73148f6a524a5b3d554579d',
-    name: 'Cámara 3'
-  }
-};
-```
-
-Puedes agregar más cámaras siguiendo el mismo patrón.
-
 ## Estructura del Proyecto
 
 ```
-cameras/
+hikvision-api-camera-house/
 ├── config/              # Configuraciones y constantes
 ├── controllers/         # Lógica de negocio
-├── routes/             # Definición de endpoints
-├── services/           # Servicios para APIs externas
-└── index.js            # Punto de entrada
+├── routes/              # Definición de endpoints
+├── services/            # Servicios para APIs externas
+├── .env                 # Variables de entorno (no se sube a git)
+├── .env.example         # Plantilla de variables de entorno
+└── index.js             # Punto de entrada
 ```
 
-El proyecto sigue una arquitectura MVC modular:
 - **Routes**: Define los endpoints y los mapea a controladores
 - **Controllers**: Maneja requests/responses y lógica de negocio
 - **Services**: Capa de servicios para llamadas a APIs externas
@@ -153,3 +146,4 @@ El proyecto sigue una arquitectura MVC modular:
 - Node.js
 - Express
 - Axios
+- dotenv

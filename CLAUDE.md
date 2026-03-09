@@ -15,7 +15,7 @@ El usuario tenía 3 comandos curl que utilizaba para acceder a las imágenes de 
 ## Estructura del Proyecto
 
 ```
-/Users/damian/projects/lab/cameras/
+hikvision-api-camera-house/
 ├── config/
 │   └── cameras.js              # Configuración de cámaras y constantes
 ├── controllers/
@@ -27,6 +27,8 @@ El usuario tenía 3 comandos curl que utilizaba para acceder a las imágenes de 
 │   └── hikvisionService.js     # Servicio para llamadas a API Hikvision
 ├── index.js                    # Punto de entrada del servidor
 ├── package.json                # Dependencias y scripts
+├── .env                        # Variables de entorno (no se sube a git)
+├── .env.example                # Plantilla de variables de entorno
 ├── .gitignore                  # Archivos a ignorar en git
 ├── README.md                   # Documentación de uso
 └── CLAUDE.md                   # Este archivo - documentación técnica
@@ -47,6 +49,7 @@ El proyecto sigue una arquitectura limpia y modular:
 ### 1. Stack Tecnológico
 - **Express**: Framework web minimalista para Node.js
 - **Axios**: Cliente HTTP para hacer peticiones a la API de Hikvision
+- **dotenv**: Carga de variables de entorno desde `.env`
 - **Node.js**: Runtime de JavaScript
 
 ### 2. Conversión de CURL a Axios
@@ -54,7 +57,7 @@ El proyecto sigue una arquitectura limpia y modular:
 Los curls originales tenían la siguiente estructura:
 ```bash
 curl 'https://isa-team.hikcentralconnect.com/hcc/resource/v1/logicalresource/element/camera/{CAMERA_ID}/thumbnail?refresh=1&&needEncrypt=1'
-  -H 'cookie: JSESSIONID=ea5c8080-1f8c-4770-8bf7-32dfd2934aa9'
+  -H 'cookie: JSESSIONID=<session-id>'
   -H 'clientsource: 0'
   -H 'content-type: application/json'
   ...
@@ -68,13 +71,21 @@ Se convirtieron a axios manteniendo:
 
 ### 3. Configuración de Cámaras
 
-Las cámaras están configuradas en el archivo `config/cameras.js`:
+Las cámaras se configuran mediante variables de entorno en `.env`:
+
+```env
+CAMERA_1_ID=id-de-camara-1
+CAMERA_2_ID=id-de-camara-2
+CAMERA_3_ID=id-de-camara-3
+```
+
+Estas se consumen en `config/cameras.js`:
 
 ```javascript
 const CAMERAS = {
-  1: { id: 'ec0e4babb5bc40ff9bba0cd9c17b11ca', name: 'Cámara 1' },
-  2: { id: '9c2a039e87e34f8c877f858b36ecf6b8', name: 'Cámara 2' },
-  3: { id: 'c913adc6e73148f6a524a5b3d554579d', name: 'Cámara 3' }
+  1: { id: process.env.CAMERA_1_ID, name: 'Cámara 1' },
+  2: { id: process.env.CAMERA_2_ID, name: 'Cámara 2' },
+  3: { id: process.env.CAMERA_3_ID, name: 'Cámara 3' }
 };
 ```
 
@@ -82,13 +93,14 @@ Los IDs son identificadores únicos de cada cámara en el sistema Hikvision.
 
 ### 4. Autenticación
 
-**JSESSIONID (config/cameras.js)**:
+El `JSESSIONID` se carga desde la variable de entorno `JSESSIONID` en `.env`:
+
 ```javascript
-const JSESSIONID = 'ea5c8080-1f8c-4770-8bf7-32dfd2934aa9';
+const JSESSIONID = process.env.JSESSIONID;
 ```
 
 - Es una cookie de sesión que expira después de cierto tiempo
-- Debe actualizarse manualmente cuando expire
+- Debe actualizarse en `.env` cuando expire
 - Se obtiene iniciando sesión en Hik-Connect desde el navegador
 - Se envía en cada petición en el header `Cookie`
 
@@ -165,7 +177,7 @@ La API de Hikvision responde con este formato:
 {
   "message": "",
   "data": {
-    "picUrl": "https://ccf-sa-prod-resource-image.obs.sa-brazil-1.myhuaweicloud.com/...",
+    "picUrl": "https://...",
     "isEncrypt": 0,
     "createTime": 1773022007207
   },
@@ -173,7 +185,7 @@ La API de Hikvision responde con este formato:
 }
 ```
 
-- **picUrl**: URL firmada de AWS S3 con la imagen (expira después de 1800 segundos)
+- **picUrl**: URL firmada con la imagen (expira después de 1800 segundos)
 - **isEncrypt**: Indica si la imagen está encriptada (0 = no)
 - **createTime**: Timestamp de creación
 - **errorCode**: "0" indica éxito
@@ -222,10 +234,7 @@ const PORT = process.env.PORT || 3000;
 Por defecto usa el puerto 3000, configurable via variable de entorno.
 
 ### Base URL
-```javascript
-const BASE_URL = 'https://isa-team.hikcentralconnect.com/hcc/resource/v1/logicalresource/element/camera';
-```
-URL base de la API de Hikvision para el tenant `isa-team`.
+La URL base de la API de Hikvision está definida en `config/cameras.js` como `BASE_URL`.
 
 ## Scripts NPM
 
@@ -235,35 +244,39 @@ URL base de la API de Hikvision para el tenant `isa-team`.
 ## Dependencias
 
 ### Producción
-- **express@^4.18.2**: Framework web
-- **axios@^1.6.0**: Cliente HTTP
+- **express**: Framework web
+- **axios**: Cliente HTTP
+- **dotenv**: Carga de variables de entorno
 
 ### Desarrollo
-- **nodemon@^3.0.1**: Auto-reload durante desarrollo
+- **nodemon**: Auto-reload durante desarrollo
 
 ## Notas de Mantenimiento
 
 ### Actualizar JSESSIONID
 Cuando la sesión expire (los endpoints devuelven error de autenticación):
-1. Abrir https://www.hik-connect.com en el navegador
-2. Iniciar sesión
-3. Abrir DevTools (F12) → Network tab
-4. Buscar peticiones a `hikcentralconnect.com`
-5. Copiar el valor de la cookie `JSESSIONID`
-6. Actualizar en `config/cameras.js` línea 19
+1. Abrir Hik-Connect en el navegador e iniciar sesión
+2. Abrir DevTools (F12) → Network tab
+3. Buscar peticiones a `hikcentralconnect.com`
+4. Copiar el valor de la cookie `JSESSIONID`
+5. Actualizar el valor en `.env`
 
 ### Agregar Más Cámaras
 1. Identificar el ID de la cámara en Hik-Connect
-2. Agregar entrada en el objeto `CAMERAS` en `config/cameras.js`:
+2. Agregar la variable en `.env`:
+```env
+CAMERA_4_ID=nuevo-id-de-camara
+```
+3. Registrar la cámara en `config/cameras.js`:
 ```javascript
 4: {
-  id: 'nuevo-id-de-camara',
+  id: process.env.CAMERA_4_ID,
   name: 'Cámara 4'
 }
 ```
 
-### URLs Firmadas de AWS S3
-Las URLs en `picUrl` tienen un tiempo de expiración (`X-Amz-Expires=1800` = 30 minutos).
+### URLs Firmadas
+Las URLs en `picUrl` tienen un tiempo de expiración de 1800 segundos (30 minutos).
 Si necesitas almacenar imágenes por más tiempo, debes descargarlas y guardarlas localmente.
 
 ## Testing Manual Realizado
@@ -277,21 +290,23 @@ Durante la implementación se probó:
 
 ## Posibles Mejoras Futuras
 
-1. **Variables de entorno**: Mover JSESSIONID y configuración a archivo `.env`
-2. **Refresh automático de token**: Implementar login automático cuando expire la sesión
-3. **Cache**: Cachear URLs por algunos minutos para reducir peticiones
-4. **Rate limiting**: Limitar cantidad de peticiones por minuto
-5. **Logging**: Implementar logger (winston, pino) para debugging
-6. **Tests**: Agregar tests unitarios y de integración (Jest, Mocha)
-7. **Docker**: Containerizar la aplicación
-8. **Health check**: Endpoint `/health` para monitoreo
-9. **Metrics**: Prometheus metrics para observabilidad
+1. **Refresh automático de token**: Implementar login automático cuando expire la sesión
+2. **Cache**: Cachear URLs por algunos minutos para reducir peticiones
+3. **Rate limiting**: Limitar cantidad de peticiones por minuto
+4. **Logging**: Implementar logger (winston, pino) para debugging
+5. **Tests**: Agregar tests unitarios y de integración (Jest, Mocha)
+6. **Docker**: Containerizar la aplicación
+7. **Health check**: Endpoint `/health` para monitoreo
+8. **Metrics**: Prometheus metrics para observabilidad
 
 ## Comandos Útiles
 
 ```bash
 # Instalar dependencias
 npm install
+
+# Configurar variables de entorno
+cp .env.example .env
 
 # Iniciar servidor
 npm start
@@ -304,17 +319,7 @@ curl http://localhost:3000/
 curl http://localhost:3000/cameras
 curl http://localhost:3000/camera/1
 curl http://localhost:3000/camera/1?download=true -o camera1.jpg
-
-# Detener servidor (si corre en background)
-pkill -f "node index.js"
 ```
-
-## Información de Contacto del Proyecto
-
-- **Ubicación**: `/Users/damian/projects/lab/cameras`
-- **Puerto por defecto**: 3000
-- **Última actualización**: 2026-03-08
-- **Servidor corriendo**: background task ID `bed8db2`
 
 ## Referencias
 

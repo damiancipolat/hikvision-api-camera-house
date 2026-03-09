@@ -4,21 +4,21 @@
 
 const CAMERAS = {
   1: {
-    id: 'ec0e4babb5bc40ff9bba0cd9c17b11ca',
+    id: process.env.CAMERA_1_ID,
     name: 'Cámara 1'
   },
   2: {
-    id: '9c2a039e87e34f8c877f858b36ecf6b8',
+    id: process.env.CAMERA_2_ID,
     name: 'Cámara 2'
   },
   3: {
-    id: 'c913adc6e73148f6a524a5b3d554579d',
+    id: process.env.CAMERA_3_ID,
     name: 'Cámara 3'
   }
 };
 
-// Cookie de sesión - IMPORTANTE: Actualizar cuando expire
-const JSESSIONID = '53a0c746-1a5a-491f-adbf-8357bdc8abc7';
+// Cookie de sesión - IMPORTANTE: Actualizar cuando expire (variable de entorno JSESSIONID)
+const JSESSIONID = process.env.JSESSIONID;
 
 // Base URL de la API
 const BASE_URL = 'https://isa-team.hikcentralconnect.com/hcc/resource/v1/logicalresource/element/camera';
